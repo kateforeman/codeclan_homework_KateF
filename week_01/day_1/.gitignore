@@ -1,0 +1,4 @@
+#File to ignore
+#This is a .gitignore file
+#Every file contained here is ignored by git 
+file_to_ignore.txt
