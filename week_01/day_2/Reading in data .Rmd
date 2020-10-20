@@ -1,0 +1,17 @@
+```{r}
+library(tidyverse)
+```
+
+
+#Reading in data 
+
+* Reading in CSV 
+* Reading in xlsx 
+* Options - other delimited types and reading URL paths 
+
+#readr 
+
+```{r}
+read_csv("dog_bites.csv")
+```
+

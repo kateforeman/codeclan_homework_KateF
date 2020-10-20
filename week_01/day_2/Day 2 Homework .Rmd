@@ -1,0 +1,57 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse) 
+library(dplyr) 
+```
+
+```{r}
+starbucks_data <- read_csv("data/starbucks_drinkMenu_expanded.csv") 
+starbucks_data
+  
+```
+
+```{r}
+calories_in_drinks <- select(starbucks_data, Beverage_category, Beverage, Beverage_prep, Calories) 
+calories_in_drinks 
+```
+
+```{r}
+is.na(calories_in_drinks)
+sum(is.na(calories_in_drinks))
+```
+
+```{r}
+mutate(calories_in_drinks, calorie_diff = 135 - Calories) 
+```
+
+```{r}
+beverages_grouped <- group_by(calories_in_drinks, Beverage_category)
+summarise(beverages_grouped, mean(Calories)) 
+```
+
+#The Frappucino Blended Coffee and Blended Creme and Smoothies have the most calories on average. The Coffee, Classic Espresso Drinks and Shaken Iced Beverages have the least number of calories on average. 
+
+```{r}
+beverages_grouped_by_preparation <- group_by(calories_in_drinks, Beverage_prep) 
+summarise(beverages_grouped_by_preparation, mean(Calories)) 
+```
+```{r}
+beverages_grouped_by_preparation
+```
+
+```{r}
+summarise(calories_in_drinks, mean(Calories)) 
+
+```
+
+
+
+```{r}
+filter(beverages_grouped_by_preparation, Calories > 193)
+```
+
+#A coffee type, like a brewed coffee 
