@@ -1,0 +1,75 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(dplyr) 
+```
+
+```{r}
+movies_data <- read_csv("data/movies.csv")
+head(movies_data, 10) 
+view(movies_data)
+```
+
+```{r}
+movies_selected <- select(movies_data, title, runtime, budget) 
+movies_selected 
+```
+
+```{r}
+
+```
+
+```{r}
+movies_selected %>% 
+  summarise(count = sum(is.na(movies_selected)))
+```
+
+```{r}
+movies_runtime <- 
+  movies_selected %>%
+  select(runtime) %>%
+  mutate(movies_runtime = 
+           na_if(runtime, "0")) 
+sum(is.na(movies_runtime))
+```
+
+```{r}
+movies_imputed <- 
+  movies_selected %>% 
+  mutate(runtime = coalesce(runtime, median(runtime, na.rm = TRUE))) 
+movies_imputed 
+
+is.na("runtime")
+sum(is.na("runtime"))
+```
+
+
+ 
+```{r}
+movies_selected %>%
+  slice_max(movies_imputed, n = 10) %>%
+  slice_min(movies_imputed, n = 10) 
+```
+#impute everything with a budget below $100 with the median budget using is_else and overwrite movies_imputed 
+```{r}
+movies_imputed <- movies_selected %>%
+  select(budget) %>% 
+  mutate(budget_low = coalesce(budget, median(budget, na.rm = TRUE))) %>%
+  if_else(budget < 100, budget_low, budget) 
+  
+```
+
+```{r}
+movies_imputed <- movies_selected %>%
+  select(budget) %>%
+  if_else(budget < 100, coalesce(budget, median(budget, na.rm = TRUE)), budget) 
+```
+
+```{r}
+movies_imputed <- if_else(budget < 100, coalesce(budget, median(budget, na.rm = TRUE)), budget)
+```
+

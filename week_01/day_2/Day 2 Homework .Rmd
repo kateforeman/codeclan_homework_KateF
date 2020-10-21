@@ -9,10 +9,16 @@ library(dplyr)
 ```
 
 ```{r}
-starbucks_data <- read_csv("data/starbucks_drinkMenu_expanded.csv") 
-starbucks_data
-  
+starbucks_data <- read_csv("~/codeclan_homework_KateF/week_01/day_2/data/starbucks_drinkMenu_expanded.csv")
 ```
+
+
+```{r}
+starbucks_data 
+```
+
+
+
 
 ```{r}
 calories_in_drinks <- select(starbucks_data, Beverage_category, Beverage, Beverage_prep, Calories) 
@@ -44,8 +50,9 @@ beverages_grouped_by_preparation
 ```
 
 ```{r}
-summarise(calories_in_drinks, mean(Calories)) 
+summarise(calories_in_drinks, mean_cals = mean(Calories)) 
 
+#pull() this to use this number individually or it can't be used as a filter in a filter 
 ```
 
 
@@ -55,3 +62,7 @@ filter(beverages_grouped_by_preparation, Calories > 193)
 ```
 
 #A coffee type, like a brewed coffee 
+
+```{r} 
+```
+
