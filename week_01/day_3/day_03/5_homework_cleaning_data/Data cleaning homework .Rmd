@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r}
@@ -11,7 +13,11 @@ library(dplyr)
 ```{r}
 movies_data <- read_csv("data/movies.csv")
 head(movies_data, 10) 
-view(movies_data)
+view(movies_data) 
+```
+#Investigating how many rows are dropped if you remove na's 
+```{r}
+nrow(movies_data) - nrow(is.na(movies_data))
 ```
 
 ```{r}
@@ -19,22 +25,35 @@ movies_selected <- select(movies_data, title, runtime, budget)
 movies_selected 
 ```
 
-```{r}
-
-```
-
+#My answer 
 ```{r}
 movies_selected %>% 
   summarise(count = sum(is.na(movies_selected)))
 ```
 
+#Homework answer 
+```{r}
+movies_selected %>% 
+  summarise(na_title = sum(is.na(title)),
+            na_runtime = sum(is.na(runtime)),
+            na_budget = sum(is.na(budget))) 
+```
+
+#My answer 
 ```{r}
 movies_runtime <- 
   movies_selected %>%
-  select(runtime) %>%
   mutate(movies_runtime = 
            na_if(runtime, "0")) 
 sum(is.na(movies_runtime))
+```
+
+#Homework answer 
+```{r}
+movies_runtime <- 
+  movies_selected %>% 
+  mutate(movies_runtime = na_if(runtime, "0"))
+summarise(count = sum(is.na(movies_runtime)))
 ```
 
 ```{r}
@@ -48,21 +67,28 @@ sum(is.na("runtime"))
 ```
 
 
- 
+#Variable movies_imputed was not working because slice works on column titles and movies_imputed contains various types of variables. 
 ```{r}
 movies_selected %>%
-  slice_max(movies_imputed, n = 10) %>%
-  slice_min(movies_imputed, n = 10) 
+  slice_max(runtime, n = 10)
 ```
+#Does this by distinct values so it produces all 35 values 
+```{r}
+movies_selected %>%
+  slice_min(runtime, n = 10) 
+```
+
+
 #impute everything with a budget below $100 with the median budget using is_else and overwrite movies_imputed 
+#Homework solutions 
 ```{r}
 movies_imputed <- movies_selected %>%
   select(budget) %>% 
-  mutate(budget_low = coalesce(budget, median(budget, na.rm = TRUE))) %>%
-  if_else(budget < 100, budget_low, budget) 
-  
+  mutate(budget = if_else(budget < 100, median(budget), budget)) 
+head(movies_imputed, 10) 
 ```
 
+#Using pipes wrong 
 ```{r}
 movies_imputed <- movies_selected %>%
   select(budget) %>%
@@ -71,5 +97,29 @@ movies_imputed <- movies_selected %>%
 
 ```{r}
 movies_imputed <- if_else(budget < 100, coalesce(budget, median(budget, na.rm = TRUE)), budget)
+```
+
+#Good example of pipes 
+```{r}
+amount_spent <- c(9.1, 8.55, 14.32, 14.17, 14.34, 7.97, 9.79, 11.47 ,12.44)
+
+category <- c("Lunch", "Dinner", "Lunch", "Lunch", "Cinema", "Drinks",
+  "Lunch", "Lunch", "Dinner")
+  
+my_week_of_spending <- tibble(
+  total_amount_spent = amount_spent, 
+  spending_category = category)
+  
+str(my_week_of_spending)
+
+my_week_of_spending %>%
+  summarise(my_week_of_spending, sum(amount_spent)) 
+
+#Not summarising the week of spending here, so the total amount spent for each "Lunch" category is not shown. This pipe only shows the total sum for "Lunch" because we did not ask for a summary of week of spending. 
+
+my_week_of_spending %>%
+  filter(spending_category == "Lunch") %>%
+  summarise(sum(total_amount_spent)) 
+```
 ```
 
