@@ -1,0 +1,81 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#Investigating the data, exploring the dimensions, missing data and number of distinct values in the dataset 
+```{r}
+books_data %>% 
+summarise(count = is.na(books_data)) 
+which(is.na(books_data)) 
+n_distinct(books_data)
+```
+
+
+#Dropped the missing values and publisher, isbn and isbn13 
+```{r}
+clean_books_data <- na.omit(books_data) 
+clean_books_data_dropped <- select(clean_books_data, -publisher, -isbn, -isbn13) 
+
+```
+
+
+#Created a new column that specifies if the number of pages in each book is greater than 1000 or less than 1000 
+```{r}
+clean_books_data_dropped %>% 
+  select(num_pages) %>% 
+  mutate(page_number_sum = if_else(num_pages >= 1000, "Greater than or equal to 1000", "Less than 1000")) 
+```
+
+#A simple plot of the relationship bewteen book length and book average rating 
+#This plot does not really show anything particularly informative, other than the fact the majority of books are between 0 and 1500 pages and most reviews are 3 and above 
+```{r}
+plot(clean_books_data_dropped$num_pages, clean_books_data_dropped$average_rating) 
+```
+
+#A simple correlation test between number of pages and average rating showed very minimal, if any, correlation - given 0.2 is considered a weak correlation, and 1.0 is a perfect correlation. 
+```{r}
+cor(clean_books_data_dropped$num_pages, clean_books_data_dropped$average_rating)
+```
+
+
+```{r}
+library(Hmisc)
+```
+
+#Using the Hmisc package to perform pearson and spearman correlation tests 
+```{r}
+rcorr(clean_books_data_dropped$num_pages, clean_books_data_dropped$average_rating, type=c("pearson"))
+```
+
+```{r}
+rcorr(clean_books_data_dropped$num_pages, clean_books_data_dropped$average_rating, type=c("spearman"))
+```
+
+#How frequently do authors appear in the dataset 
+```{r}
+clean_books_data_dropped %>% 
+  group_by(authors) %>%
+  summarise(total_author_appearances = n()) 
+```
+
+#Finding the mean average rating for each author and selecting the top 20 average ratings 
+```{r}
+clean_books_data_dropped %>% 
+  group_by(authors) %>% 
+  summarise(mean_rating = mean(average_rating)) %>% 
+  slice_max(mean_rating, n = 20) 
+```
+
+#Putting the number of ratings for each book into the category of few, some or many 
+```{r}
+rating_frequency <- clean_books_data_dropped %>%
+  mutate(
+   ratings_count = case_when(
+      ratings_count < 1000 ~ "Few ratings",
+      ratings_count < 100000 ~ "Some ratings",
+      ratings_count >= 100000 ~ "Many ratings"
+      )
+    )
+rating_frequency 
+```
