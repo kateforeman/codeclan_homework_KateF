@@ -3,6 +3,15 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r}
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+books_data <- read_csv("data/books.csv")
+```
+
 #Investigating the data, exploring the dimensions, missing data and number of distinct values in the dataset 
 ```{r}
 books_data %>% 
@@ -79,3 +88,15 @@ rating_frequency <- clean_books_data_dropped %>%
     )
 rating_frequency 
 ```
+
+```{r}
+clean_books_data_dropped %>% 
+  arrange(num_pages) 
+```
+
+
+```{r}
+clean_books_data_dropped %>% 
+  filter(num_pages != 0)
+```
+
