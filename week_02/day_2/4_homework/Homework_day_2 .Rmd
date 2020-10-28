@@ -77,7 +77,6 @@ From your new joined data, create a new tibble codeclan_hashtags containing only
 ```{r}
 combined %>% 
   summarise(tweet_id, hashtags) %>%
-  filter(toupper()) 
-  
+  drop_na(hashtags) 
 ```
 
