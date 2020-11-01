@@ -1,0 +1,71 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Read the cleaned data into R 
+
+```{r}
+library(tidyverse) 
+library(dplyr) 
+```
+
+```{r}
+clean_data <- read_csv("clean_homework_meteorite_data")
+```
+
+Find the names and years found for the 10 largest meteorites in the data 
+
+```{r}
+clean_data %>% 
+  arrange(desc(mass_g)) %>% 
+  head(10) 
+```
+```{r}
+sum(is.na(clean_data$mass_g)) 
+sum(clean_data$mass_g) 
+is.numeric(clean_data$mass_g)
+```
+
+Names (Highest to lowest): Hoba, Cape York, Campo del Cielo, Canyon Diablo, Armanty, Gibeon, Chupaderos, Mundrabilla, Sikhote-Alin, Bacubirito 
+Years (Highest to lowest): 1920, 1918, NA, 1891, 1898, 1836, 1852, 1911, 1947, 1863 
+
+Find the average mass of meteorites that were recorded falling, vs. those which were just found 
+
+Using variables , filter by fall status and calculate mean (as a test) 
+
+```{r}
+temp_df <- clean_data %>%
+  filter(fall == "Found")
+mean(temp_df_df$mass_g, na.rm = TRUE)
+```
+
+Alternate method, using group by rather than filter .This is more elegant than above
+
+```{r}
+clean_data %>% 
+  group_by(fall) %>%
+  summarise(indv_mean = mean(mass_g))
+  
+```
+Find the number of meteorites in each year, for every year since 2000 
+
+This approach uses group_by and a filter, with n() to perform the count 
+
+```{r}
+clean_data %>%
+  group_by(year) %>%
+  filter(year >= 2000) %>% 
+  summarise(meteor_count = n())
+```
+
+Find the number of meteorites in each year, for every year since 2000.
+
+This approach uses a filter, and uses count to perform the count by year 
+
+```{r}
+clean_data %>%
+  filter(year >= 2000) %>% 
+  count(year)
+```
+
