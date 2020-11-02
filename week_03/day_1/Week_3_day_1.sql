@@ -96,5 +96,11 @@ WHERE first_name IS NULL
 GROUP BY department
 HAVING COUNT(id) >= 2; 
 
+--MVP 
+--G12 
 
-
+SELECT 
+	department, 
+	COUNT(ID)
+FROM employees 
+GROUP BY department;  
