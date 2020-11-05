@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(RPostgres) 
+```
+
+```{r}
+source("~/acme_credentials.R") 
+acme_connect <- dbConnect(
+  drv = Postgres(), 
+  user = acme_username, 
+  password = acme_password, 
+  dbname = "acme_pool", 
+  host = "db-postgresql-lon1-94437-do-user-4831272-0.a.db.ondigitalocean.com", 
+  port = 25061, 
+  bigint = "numeric")
+rm(acme_username, acme_password)
+```
+
+```{r}
+dbListTables(conn = acme_connect) 
+```
+```{r}
+dbListFields(acme_connect, name = "employees")
+```
+
+```{r}
+employees <- dbGetQuery(acme_connect, 
+                        statement = "SELECT * FROM employees;")
+```
+
+Get the records of all employees, adding a field full_name containing the first_name and last_name of each employee separated by a space 
+
+```{r}
+employees %>% 
+  mutate(full_name = str_c(first_name, last_name, sep = " "))
+```
+
+Get all employees records again, but this time listing their team name (as team_name), rather than their team_id 
+
+```{sql, connection = acme_connect} 
+SELECT 
+  e.id,
+  e.first_name,
+  e.last_name, 
+  e.email, 
+  t.name AS team_name
+FROM employees AS e LEFT JOIN teams AS t 
+ON e.id = t.id; 
+```
+
+Obtain a breakdown of the number of employees per team. Order the table by decreasing number of employees. Include all teams, even if they have no employees 
+
+```{sql, connection = acme_connect}
+SELECT 
+   t.name AS team_name, 
+   COUNT(e.id) AS num_employees
+FROM employees AS e RIGHT JOIN teams AS t 
+ON e.team_id = t.id 
+GROUP BY t.name; 
+```
+
+AcmeCorp management want to send an email survey to each of their employees. However, they are worried that some of the employees may not receive the email either because their email addresses may be invalid (in that they don’t contain an ‘@’ symbol), or they may not have a stored email address at all. Can you find all these employees? 
+
+```{sql, connection = acme_connect} 
+SELECT 
+  id, 
+  first_name, 
+  last_name,
+  email 
+FROM employees 
+WHERE email IS NULL OR email NOT LIKE '%@%'
+```
+

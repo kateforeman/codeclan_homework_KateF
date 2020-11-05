@@ -1,0 +1,127 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#Connecting R to a DB using a source file 
+
+#Keeping credentials secure not pushing to github 
+
+```{r}
+library(RPostgres) 
+```
+
+#Now source in our credentials file and use rm() for hiding them afterwards 
+
+```{r}
+source("~/omni_credentials.R") 
+```
+
+```{r}
+source("~/omni_credentials.R") 
+db_connection <- dbConnect(
+  drv = Postgres(), 
+  user = omni_username, 
+  password = omni_password, 
+  dbname = "omni_pool", 
+  host = "db-postgresql-lon1-94437-do-user-4831272-0.a.db.ondigitalocean.com", 
+  port = 25061, 
+  bigint = "numeric") 
+
+rm(omni_username, omni_password) 
+```
+
+```{r}
+dbListTables(conn = db_connection) 
+```
+
+```{r}
+dbListFields(conn = db_connection, name = "employees")
+```
+
+#dbGetQuery(): 
+#Sends the query 
+#It retrieves the results 
+#It clears the results set 
+
+#Pattern for dealing with big data in "chunks" 
+
+```{r}
+data <- dbGetQuery(
+  conn = db_connection, 
+  statement = "SELECT * FROM employees") 
+
+data 
+```
+
+```{r}
+class(data)
+```
+
+```{r}
+nrow(data)
+```
+
+```{r}
+result_set <- dbSendQuery(
+  conn = db_connection, 
+  statement = "SELECT * FROM employees"
+) 
+
+class(result_set) 
+
+```
+
+```{r}
+first_10 <- dbFetch(res = result_set, n = 10) 
+
+first_10 
+```
+
+```{r}
+next10 <- dbFetch(res = result_set, n = 10) 
+
+next10
+```
+
+#Can force it to give all the remaining records 
+
+```{r}
+all_remaining <- dbFetch(res = result_set, n = -1) 
+
+nrow(all_remaining) 
+```
+
+```{r}
+dbClearResult(res = result_set) 
+```
+
+#Native SQL chunk in R notebook 
+
+```{sql, connection = db_connection} 
+SELECT * 
+FROM employees 
+LIMIT 10 
+```
+
+```{sql, connection = db_connection, output.var = "pay_details"} 
+SELECT * 
+FROM pay_details
+```
+
+```{r}
+pay_details 
+```
+
+#Changing the iban column to lower case 
+
+```{r}
+library(tidyverse) 
+pay_details %>% 
+  mutate(iban = str_to_lower(iban))
+```
+
+```{r}
+dbDisconnect(conn = db_connection)
+```
+
