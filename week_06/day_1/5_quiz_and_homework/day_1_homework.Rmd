@@ -1,0 +1,183 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+MVP - The Titanic 
+
+You’re going to calculate the conditional probabilities prob( survived ∣ crew ) and prob( survived ∣ passenger ) to settle this dispute. 
+
+```{r}
+library(prob)
+library(gtools)
+library(tidyverse)
+```
+
+```{r}
+titanic <- read_csv("data/titanic.csv") 
+head(titanic) 
+```
+
+Recoding the class variable to Passenger and Crew 
+
+```{r}
+titanic <- titanic %>% 
+  mutate(class = recode(class, "3rd" = "Passenger", 
+                                "2nd" = "Passenger", 
+                                "1st" = "Passenger", 
+                                "engineering crew" = "Crew", 
+                                "victualling crew" = "Crew", 
+                                "restaurant staff" = "Crew", 
+                                "deck crew" = "Crew")) 
+
+```
+
+
+Calculating the probability of crew that survived 
+
+```{r}
+prob_crew_that_survived <- titanic %>%
+  filter(class == "Crew", survived == "yes") %>%
+  summarise(prob = n() / nrow(titanic)) 
+
+prob_crew_that_survived
+```
+
+Calculating the probability of passengers that survived 
+
+```{r}
+prob_passengers_that_survived <- titanic %>% 
+  filter(class == "Passenger", survived == "yes") %>% 
+  summarise(prob = n() / nrow(titanic)) 
+
+prob_passengers_that_survived 
+```
+
+Adding a logical column for class. 
+
+```{r}
+titanic_mutated <- titanic %>% 
+  mutate(is_crew = class == "Crew") 
+```
+
+Finding the probability of being a crew member. 
+
+```{r}
+prob_crew <- titanic_mutated %>%
+  summarise(prob = sum(class == "Crew") / n())
+prob_crew 
+```
+
+Finding the probability of being a passenger. 
+
+```{r}
+prob_passengers <- titanic_mutated %>%
+  summarise(prob = sum(class == "Passenger") / n())
+prob_passengers
+```
+
+By hand the probability of being a crew member and surviving is 0.23707867. So the proportion of crew members that survived was 24%. 
+
+By hand the probability of being a passenger and surviving is 0.37965072. So the probability of passengers that survived was 38%. 
+
+This answers the question and shows passengers were more likely to survive than the crew. 
+
+I could not get this to run in dplyr, I got it to work at one point but then I cleared by global environment and it wouldn't produce the same answer again unfortunately. I've just left my attempts in. 
+
+
+
+```{r}
+conditional_probability_crew_survivors <- titanic_mutated %>% 
+  filter(is_crew == "yes") %>%
+  summarise(prob = sum(survived) / n())
+
+conditional_probability_crew_survivors 
+```
+```{r}
+conditional_probability_passenger_survivors <- titanic_mutated %>% 
+  filter(survived == "yes") %>%
+  summarise(prob = sum(is_crew) / n())
+
+conditional_probability_crew_survivors 
+```
+
+```{r}
+titanic_mutated <- titanic %>% 
+  mutate(is_crew = class == "Crew") %>% 
+  mutate(survived_logical = survived == "yes") %>% 
+  mutate(is_crew_and_survived = class == "Crew" & survived == "yes") %>% 
+  mutate(is_passenger_and_survived = class == "Passenger" & survived == "yes")
+```
+
+```{r}
+prob_crew_that_survived <- titanic_mutated %>%
+  filter(is_crew_and_survived == TRUE) %>% 
+  filter(survived == "yes") %>% 
+  summarise(prob = sum() / n())
+
+prob_crew_that_survived 
+```
+
+```{r}
+prob_pasengers_that_survived <- titanic_mutated %>% 
+  filter(is_passenger_and_survived == TRUE) %>% 
+  summarise(prob = sum(is_crew) / n()) 
+
+prob_pasengers_that_survived 
+```
+
+MVP and Extension - Probability problems 
+
+If I roll a six-sided dice once, what is the probability of getting a number less than 5? 
+
+2/3 or 0.6666 
+
+How many outcomes are there in the sample space of an experiment in which we toss three dice? 
+
+```{r}
+three_dice <- rolldie(3) 
+```
+
+216  
+
+In an experiment where we roll four dice:
+
+how many outcomes are in the event total_equals_5_6_7 (i.e. the total of the four dice equals 5, 6 or 7)?
+what is the probability of this event?
+what assumptions do we apply in answering part ii? 
+
+```{r}
+four_dice <- rolldie(4) 
+
+total_equals_5_6_7 <- four_dice %>% 
+  filter(X1 + X2 + X3 + X4 == 5:7) 
+```
+
+9 outcomes. 
+
+```{r}
+9 / 1296  
+```
+
+The probability of this occuring is 0.006944444. 
+
+The assumption we are making here is that the dice are unbiased. 
+
+Five chairs are placed in a row in a room, along with five people of differing height. The people sit down randomly on the chairs. What is the probability that they sit in order of decreasing height, left to right? 
+
+```{r}
+people <- c("A", "B", "C", "D", "E") 
+
+sitting_chairs <- permutations(n = 5, r = 5, v = people, repeats.allowed = FALSE)
+nrow(sitting_chairs) 
+```
+
+The probability is 0.008333 
+
+```{r}
+six_dice <- rolldie(6) 
