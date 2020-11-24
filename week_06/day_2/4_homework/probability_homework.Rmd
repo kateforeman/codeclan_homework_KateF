@@ -1,0 +1,127 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+You are given a cut of a database containing details of mobile phones and their customer reviews on an online shopping site in file 20190928-items.csv. Each row in the data corresponds to one model of mobile phone. Use the data to answer the following questions. 
+
+As part of the MVP we want you not to just run the code but also have a go at intepreting the results - this is the main learning objective from this homework. Don’t worry if you aren’t sure, it’s ok to get it wrong, but give it a go, through trying we will learn. 
+
+```{r}
+library(tidyverse) 
+library(janitor) 
+```
+
+
+```{r}
+mobile_phones <- read_csv("data/20190928-items.csv") %>% 
+  clean_names() 
+
+mobile_phones 
+```
+
+Find the brand with the highest numbers of phones in the dataset. 
+
+Samsung has the most phones with 397. 
+
+```{r}
+mobile_phones_filtered <- mobile_phones %>% 
+  group_by(brand, title) %>% 
+  summarise(total = n()) %>% 
+  summarise(total = sum(total)) %>% 
+  arrange(desc(total))
+  
+mobile_phones_filtered 
+   
+``` 
+
+For your top brand, plot the distribution of phone ratings as a probability density, overlaying a fitted normal distribution. 
+
+Do you think the normal distribution provides a good model of these ratings? 
+
+```{r}
+mobile_phones %>% 
+  mutate(f_l = dunif(x = rating, min = 1, max = 5)) %>% 
+  filter(brand == "Samsung") %>% 
+  ggplot(aes(x = rating, y = f_l)) +
+  geom_line() +
+  ylim(0, 1) + 
+  xlab("Rating") + ylab("Probability Density") 
+```
+
+```{r}
+mobile_phones %>% 
+  ggplot(aes(x = rating, y = f_l)) +
+  geom_line() +
+  ylim(0, 1) + 
+  xlab("Rating") + ylab("Probability Density") 
+``` 
+
+```{r}
+mobile_phones_statistics <- mobile_phones %>%
+  filter(brand == "Samsung") %>%
+  summarise(
+    num = n(),
+    mean = mean(rating),
+    sd = sd(rating)
+  )
+mobile_phones_statistics 
+```
+
+```{r}
+mobile_phones %>% 
+  filter(brand == "Samsung") %>% 
+  group_by(total_reviews) %>% 
+  summarise(count = sum(total_reviews)) %>% 
+  summarise(count2 = sum(count))
+  
+```
+
+3118 
+
+
+```{r}
+mobile_phones %>% 
+  filter(brand == "Samsung") %>%
+  ggplot(aes(x = rating)) +
+  geom_histogram(aes(y = ..density..), col = "white", bins = 20) +
+  stat_function(
+    fun = dnorm, 
+    args = list(
+      mean = mobile_phones_statistics$mean, 
+      sd = mobile_phones_statistics$sd
+    ),
+    col = "red"
+  )
+```
+
+The normal distribution is quite a good fit for this data. 
+
+We can be more quantitative in comparing the distribution of top brand ratings with a normal distribution. You calculated the mean() and sd() of your distribution in an earlier question. Use these values to calculate the proportions of ratings within one-, two- and three standard deviations of the mean. 
+
+Compare these proportions with those you expect for a normal distribution. 
+
+I can't figure out how to calculate the second and third standard deviations but given the first standard deviation proportion is slightly below the normal distribution I would think they will all be slightly lower. 
+
+```{r}
+one_sd <- mobile_phones %>%
+  filter(rating >= mobile_phones_statistics$mean - mobile_phones_statistics$sd) %>%
+  filter(rating <= mobile_phones_statistics$mean + mobile_phones_statistics$sd) %>%
+  summarise(prob_within_1sd = n() / nrow(mobile_phones_statistics)) 
+
+one_sd 
+```
+
+```{r}
+two_sd <- mobile_phones %>%
+  filter(rating > mobile_phones_statistics$mean - mobile_phones_statistics$sd) %>% 
+  summarise(prob_within_2sd = n() / nrow(mobile_phones_statistics)) 
+
+```
+
+```{r}
+three_sd <- mobile_phones %>%
+  filter(rating <= mobile_phones_statistics$mean - mobile_phones_statistics$sd) %>% 
+  summarise(prob_within_3sd = n() / nrow(mobile_phones_statistics)) 
+```
+
