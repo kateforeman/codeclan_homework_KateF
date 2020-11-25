@@ -1,0 +1,118 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse) 
+library(janitor) 
+```
+
+```{r}
+ames_data <- read_csv("data/ames.csv") %>% 
+  clean_names() 
+```
+
+Investigate the distribution of lot_area. Is the distribution roughly normal? If not, what problems do you find? 
+
+The data is right skewed. 
+
+```{r}
+lot_area <- ames_data %>%
+  summarise(
+    mean_lot_area = mean(lot_area), 
+) 
+
+lot_area 
+```
+
+```{r}
+ames_data %>% 
+  ggplot(aes(lot_area)) + 
+  geom_histogram(bins = 100) 
+```
+
+```{r}
+library(infer)
+```
+
+Compute and visualise a bootstrap sampling distribution for the mean(lot_area) of the sold houses. 
+
+```{r}
+bootstrap_resample_200 <- ames_data %>%
+  rep_sample_n(size = 200, replace = TRUE, reps = 5000) %>%
+  summarise(
+    mean_area = mean(lot_area) 
+  ) 
+
+bootstrap_resample_200 
+```
+
+```{r}
+bootstrap_resample_200 %>%
+  ggplot(aes(mean_area)) +
+  geom_histogram(col = "white", alpha = 0.7, bins = 100) 
+```
+
+Use your bootstrap distribution to calculate a 95% CI for mean(lot_area), and visualise it on the distribution 
+
+```{r}
+infer_resample <- ames_data %>%
+  specify(response = lot_area) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean") 
+```
+
+
+```{r}
+infer_ci_95 <- infer_resample %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+
+infer_ci_95 
+```
+
+You would like to know the mean(lot_area) of the sold houses with higher confidence. Calculate the 99% CI for this variable (you can re-use your bootstrap distribution from above). Is it narrower or broader than the 95% CI? Does that make sense? 
+
+```{r}
+infer_ci_99 <- infer_resample %>%
+  get_confidence_interval(level = 0.99, type = "percentile")
+
+infer_ci_99  
+```
+
+It is broader. This makes sense because the confidence interval is wider and more of the data falls between these two values and the areas outwith the confidence intervals is smaller. 
+
+Calculate the point estimate of the mean(lot_area) 
+
+```{r}
+ames_data %>% 
+  summarise(point_est = mean(lot_area) 
+) 
+```
+
+Calculate a point estimate and 95% CI for the proportion of houses in the data built before 1920. Does the number of reps you use matter? [Investigate reps from 200 up to 50000, memory of your laptop permitting]. 
+
+I don't think I did this right but the CI and Point Estimate did not change from 200 to 50000 reps for me. 
+
+```{r}
+ames_filtered <- ames_data %>% 
+  filter(year_built <= 1920)
+```
+
+```{r}
+bootstrap_resample_date <- ames_filtered %>% 
+  specify(response = year_built) %>%
+  generate(reps = 50000, type = "bootstrap") %>%
+  calculate(stat = "mean") 
+```
+
+```{r}
+year_ci_95 <- bootstrap_resample_date %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+
+year_ci_95
+```
+
+```{r}
+point_estimate_50000 <- ames_filtered %>% 
+  summarise(point_est = mean(year_built)) 
