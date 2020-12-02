@@ -1,0 +1,145 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse) 
+library(tsibble) 
+library(tsibbledata) 
+library(leaflet) 
+library(fable)
+library(lubridate) 
+```
+
+Load in the nyc_bikes data from the tsibbledata package. Have an initial look at it to see what you’re working with. Create three new columns: one that stores only the year the bike was used, one that stores only the month the bike was used, and one that stores the date. Use the data stored in start_time to create these new columns. 
+```{r}
+nyc_bikes <- nyc_bikes %>% 
+  mutate(year = year(start_time)) %>% 
+  mutate(month = month(start_time, label = TRUE, abbr = TRUE)) %>% 
+  mutate(date = date(start_time)) 
+
+nyc_bikes 
+```
+
+Summarise the number of bike hire counts by month. Make a plot of this data. *Hint: remember that to group time series (tsibble) data, you need to use index_by instead of group_by before your summarise function. What does this plot tell you about the time series? Do you think this downsampled data would be adequate to build a forecast with? 
+
+This plot shows the bike rentals rise up in summer and peak in August. Although another year would be useful to see the seasonality across another year, this plot does look quite useful to forecast with because it shows clear peaks and dips in data. 
+
+```{r}
+nyc_bikes %>% 
+  index_by(month) %>% 
+  summarise(sum = n()) %>% 
+  ggplot(aes(month, sum)) + 
+  geom_col() 
+```
+
+Now Summarise the number of bike hire counts by date. Make a plot of this new aggregated data. What does this plot tell you about the time series? Would this data be preferrable for time series forecasting compared to the monthly data? 
+
+This plot gives a more detailed breakdown of the data but does a poorer job of showing the clear seasonality of the data. 
+
+```{r}
+date_bikes <- nyc_bikes %>% 
+  index_by(date) %>% 
+  summarise(sum = n())
+```
+
+
+```{r}
+nyc_bikes_filled <- date_bikes %>% 
+  fill_gaps(sum = as.integer(median(sum)))
+```
+
+
+```{r}
+date_bikes %>% 
+  ggplot(aes(date)) + 
+  geom_histogram(col = "white", bins = 40) 
+```
+
+Let’s begin to build a model. For this, we will test the NAIVE, MEAN, and SNAIVE model.
+
+First, create a new tibble which uses the fill_gaps() function to fill in missing values. You haven’t come across this in class, but you should be able to look it up and use it using the help. Think about what value you might want to fill the missing values with. Justify your choice. 
+
+```{r}
+fit <- nyc_bikes_filled %>% 
+  model(
+    naive = NAIVE(nyc_bikes_filled), 
+    mean = MEAN(nyc_bikes_filled), 
+    snaive = SNAIVE(nyc_bikes_filled)
+  )  
+
+fit 
+```
+
+Now we have our model fit, build a forecast to predict bike use over the next four months. Plot your models alongside your data.
+Hint: forecast parameter would be roughly 120 (30 days x 4 months). 
+
+```{r}
+forecast <- fit %>% 
+  fabletools::forecast(h = 120) 
+
+forecast 
+```
+
+```{r}
+forecast %>% 
+  autoplot(nyc_bikes_filled) 
+```
+
+```{r}
+train <- nyc_bikes_filled %>% 
+  filter_index("2019-01-01" ~ "2019-03-31") 
+```
+
+```{r}
+fit_train <- train %>%
+  model(
+    mean_model = MEAN(nyc_bikes_filled),
+    arima = ARIMA(nyc_bikes_filled),
+    snaive = SNAIVE(nyc_bikes_filled)
+  )
+```
+
+```{r}
+forecast_test <- fit_train %>% 
+  fabletools::forecast(h = 14)
+```
+
+
+```{r}
+forecast_test %>%
+  autoplot(train, level = NULL) +
+    autolayer(filter_index(nyc_bikes, "2019-01-01" ~ .), color = "black") +
+    ggtitle("Forecasts for bike use") +
+    xlab("Date") + ylab("Sum") +
+    guides(colour=guide_legend(title = "Forecast"))
+```
+
+Make a simple ggplot (geom_point) which plots the start longitude and latitudes of each bike. Create a separate facet for each bike_id. Colour the dots in by month of use. What does this tell you about what month each bike was used most in? 
+
+Do the same for the end longitude and latitudes. 
+
+```{r}
+nyc_bikes %>% 
+ggplot(aes(start_lat, start_long, colour = month)) + 
+  geom_point() + 
+  facet_wrap(bike_id) 
+```
+
+```{r}
+nyc_bikes %>% 
+ggplot(aes(end_lat, end_long, colour = month)) + 
+  geom_point() + 
+  facet_grid(bike_id) 
+```
+
+Create an interactive leaflet plot which plots the start points of the city bikes. Ensure it has at least markers to denote start points (taken from the nyc_bikes_spatial data). Feel free to add any additional features you wish. 
+
+```{r}
+start_points <- leaflet() %>%
+  addTiles() %>% 
+  addMarkers(lng = start_lat, lat = start_long,
+             popup = "Start point")
+```
+
