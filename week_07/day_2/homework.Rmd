@@ -139,7 +139,7 @@ Create an interactive leaflet plot which plots the start points of the city bike
 ```{r}
 start_points <- leaflet() %>%
   addTiles() %>% 
-  addMarkers(lng = start_lat, lat = start_long,
+  addMarkers(lng = nyc_bikes$start_lat, lat = nyc_bikes$start_long,
              popup = "Start point")
 ```
 
