@@ -64,9 +64,9 @@ First, create a new tibble which uses the fill_gaps() function to fill in missin
 ```{r}
 fit <- nyc_bikes_filled %>% 
   model(
-    naive = NAIVE(nyc_bikes_filled), 
-    mean = MEAN(nyc_bikes_filled), 
-    snaive = SNAIVE(nyc_bikes_filled)
+    naive = NAIVE(sum), 
+    mean = MEAN(sum), 
+    snaive = SNAIVE(sum)
   )  
 
 fit 
@@ -88,16 +88,17 @@ forecast %>%
 ```
 
 ```{r}
-train <- nyc_bikes_filled %>% 
-  filter_index("2019-01-01" ~ "2019-03-31") 
+train <- nyc_bikes_filled %>%
+  mutate(month = month(date)) %>%
+  filter(month <= 10) 
 ```
 
 ```{r}
 fit_train <- train %>%
   model(
-    mean_model = MEAN(nyc_bikes_filled),
-    arima = ARIMA(nyc_bikes_filled),
-    snaive = SNAIVE(nyc_bikes_filled)
+    mean_model = MEAN(sum),
+    arima = ARIMA(sum),
+    snaive = SNAIVE(sum)
   )
 ```
 
@@ -124,14 +125,14 @@ Do the same for the end longitude and latitudes.
 nyc_bikes %>% 
 ggplot(aes(start_lat, start_long, colour = month)) + 
   geom_point() + 
-  facet_wrap(bike_id) 
+  facet_wrap(nyc_bikes$bike_id) 
 ```
 
 ```{r}
 nyc_bikes %>% 
 ggplot(aes(end_lat, end_long, colour = month)) + 
   geom_point() + 
-  facet_grid(bike_id) 
+  facet_grid(nyc_bikes$bike_id) 
 ```
 
 Create an interactive leaflet plot which plots the start points of the city bikes. Ensure it has at least markers to denote start points (taken from the nyc_bikes_spatial data). Feel free to add any additional features you wish. 
@@ -140,6 +141,6 @@ Create an interactive leaflet plot which plots the start points of the city bike
 start_points <- leaflet() %>%
   addTiles() %>% 
   addMarkers(lng = nyc_bikes$start_lat, lat = nyc_bikes$start_long,
-             popup = "Start point")
+             popup = "Start point") 
 ```
 
