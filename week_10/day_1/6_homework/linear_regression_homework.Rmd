@@ -1,0 +1,183 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Linear Regression Homework 
+
+```{r}
+library(tidyverse) 
+library(janitor) 
+```
+
+1. Read in the data 
+
+```{r}
+project <- read_csv("data/project_management.csv") %>% 
+  clean_names() 
+
+class(project)
+```
+
+2. Plot the data using the estimated_length as the independent variable and the 
+actual_length as the dependent variable. 
+
+```{r}
+project %>% 
+  ggplot(aes(estimated_length, actual_length)) + 
+  geom_point() 
+```
+
+3. Calculate the correlation coefficient of estimated_length and actual_length 
+and interpret the value you obtain. 
+
+This is a pretty strong correlation of 0.8, indicating a strong correlation 
+between estimated and actual time spent on a building project. 
+
+```{r}
+project %>% 
+  summarise(cor = cor(estimated_length, actual_length)) 
+```
+
+4. Perform a simple linear regression using actual_length as the dependent 
+variable, and estimated_length as the independent variable. Save the model 
+object to a variable. 
+
+So y is the dependent - outcome - variable (actual_length) 
+And x is the independent - explanatory - variable (estimated_length) 
+
+```{r}
+model <- lm(formula = actual_length ~ estimated_length, data = project) 
+
+summary(model)
+```
+
+5. Interpret the regression coefficient of estimated_length (i.e. slope, gradient) you obtain from the model. How do you interpret the \(r^2\) value reported by the model? 
+
+The r squared value indicates about 60% of the variance in dependent variable 
+which is actual_length, can be explained by estimated_length. 
+
+```{r}
+library(broom) 
+
+glance(model)
+```
+
+6. Is the relationship statistically significant? Remember, to assess this you need to check the \(p\)-value of the regression coefficient (or slope/gradient). But you should first check the regression diagnostic plots to see if the \(p\)-value will be reliable (don’t worry about any outlier points you see in the diagnostic plots, we’ll return to them in the extension). 
+
+The p value is statistically significant for the regression coefficient. The 
+residuals vs fitted diagnostic plot looks reliable as it is close to 0 and does 
+not stray too far from it until the end. The normal Q-Q diagnostic plot follows 
+the line, indicating it too is reliable. The scale-location also appears 
+reliable. 
+
+```{r}
+library(ggfortify)
+autoplot(model) 
+```
+
+Extension 
+
+1. Return to your plot from earlier, and now label the data points with their 
+row number in the data frame using geom_text() [Hint - you can pass aes(label = 1:nrow(project)) to this layer to generate row index labels]
+Identify by eye any points you think might be outliers and note their labels.
+Further split your outliers into those you think are ‘influential’ or ‘non-influential’ based on a visual assessment of their leverage. 
+
+It appears that the outlier of row 5 would have quite a lot of leverage and may 
+be influential. I do not see any other outliers that would have influence 
+to the same extent but 18 is quite low compared to the other observations. 
+
+```{r}
+project %>% 
+  ggplot(aes(estimated_length, actual_length)) + 
+  geom_point() + 
+  geom_text(aes(label = 1:nrow(project))) 
+```
+
+2. 
+
+Use your model object from earlier and confirm your visual assessment of which points are ‘influential’ or ‘non-influential’ outliers based on Cook’s distance. You can get a useful plot of Cook’s distance by passing argument which = 4 to autoplot(). Or try the base R plot() function for comparison [e.g. plot(model); 
+you can also use par(mfrow = c(2,2)) just before the plot() command to get 
+a nice two-by-two display]! 
+
+```{r}
+autoplot(model, which = 4) 
+```
+
+```{r}
+par(mfrow = c(2, 2)) 
+plot(model)
+```
+
+```{r}
+project_dropped <- project %>%  
+  slice(-c(3)) 
+```
+
+3. Obtain the intercept and regression coefficient of variable estimated_length
+for a simple linear model fitted to data omitting one of your non-influential outlier points.
+How different are the intercept and coefficient from those obtained above by fitting the full data set? Does this support classifying the omitted point as non-influential?
+Plot the data points, this regression line and the regression line for the full data set. How different are the lines? 
+
+The intercept and coefficient are not that different at all. This supports 
+the omitted point as not influential. 
+
+The two lines are not really visibly different. They both start under 20 and
+end just under 30. 
+
+```{r}
+model_dropped <- lm(formula = actual_length ~ estimated_length, data = 
+                      project_dropped) 
+
+summary(model_dropped) 
+
+model_dropped %>% 
+  ggplot(aes(actual_length, estimated_length)) + 
+  geom_point() 
+```
+
+```{r}
+library(modelr)
+
+project_dropped <- project_dropped %>%
+  add_predictions(model_dropped) %>%
+  add_residuals(model_dropped) 
+
+project_dropped %>% 
+  ggplot(aes(x = estimated_length)) +
+  geom_point(aes(y = actual_length)) +
+  geom_line(aes(y = pred), col = "red") 
+```
+
+```{r}
+project <- project %>%
+  add_predictions(model) %>%
+  add_residuals(model) 
+
+project %>% 
+  ggplot(aes(x = estimated_length)) +
+  geom_point(aes(y = actual_length)) +
+  geom_line(aes(y = pred), col = "red") 
+```
+
+Repeat the procedure above, but this time omitting one of your influential outliers. 
+
+This gives a very different line, it appears to be steeper and starts below 
+15 and ends under 25. This indicates the omitted observation had substantial leverage and was statistically influential. 
+
+```{r}
+project_leverage <- project %>% 
+  slice(-c(5))
+```
+
+```{r}
+project_leverage <- project_leverage %>%
+  add_predictions(model) %>%
+  add_residuals(model) 
+
+project_leverage %>% 
+  ggplot(aes(x = estimated_length)) +
+  geom_point(aes(y = actual_length)) +
+  geom_line(aes(y = pred), col = "red") 
+```
+
