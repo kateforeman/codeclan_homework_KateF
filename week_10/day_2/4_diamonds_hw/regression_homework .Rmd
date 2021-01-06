@@ -1,0 +1,15 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1. Read in the data. 
+
+```{r}
+library(tidyverse)
+
+diamonds <- read_csv("diamonds.csv") 
+
+head(diamonds) 
+```
+
