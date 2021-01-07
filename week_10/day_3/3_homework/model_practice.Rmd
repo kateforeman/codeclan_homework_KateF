@@ -1,0 +1,161 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1. Tidy up the data ready for regression:
+
+* You might like to think about removing some or all of date, id, sqft_living15,
+sqft_lot15 and zipcode (lat and long provide a better measure of location in 
+any event). 
+* Have a think about how to treat waterfront. Should we convert its type? 
+* We converted yr_renovated into a renovated logical variable, indicating 
+whether the property had ever been renovated. You may wish to do the same.
+* Have a think about how to treat condition and grade? Are they interval
+or categorical ordinal data types? 
+
+mutate(view = as.logical(waterfront)) %>% 
+
+```{r}
+library(tidyverse) 
+library(janitor) 
+library(lubridate) 
+library(modelr) 
+library(GGally) 
+
+houses <- read_csv("data/kc_house_data.csv") %>% 
+  select(-c(id, sqft_living15, sqft_lot15, zipcode, date, sqft_above)) %>% 
+  mutate(waterfront = as.logical(waterfront)) %>% 
+  mutate(yr_renovated = as.logical(yr_renovated)) 
+
+houses 
+```
+
+2. Check for aliased variables using the alias() function (this takes in a 
+formula object and a data set). [Hint - formula price ~ . says ‘price varying 
+with all predictors’, this is a suitable input to alias()]. Remove variables 
+that lead to an alias. Check the ‘Elements of multiple regression’ lesson 
+for a dropdown containing further information on finding aliased variables in 
+a dataset. 
+
+```{r}
+model_alias <- lm(price ~ ., data = houses) 
+
+alias(model_alias) 
+```
+
+3. Systematically build a regression model containing up to four main effects 
+(remember, a main effect is just a single predictor with coefficient),testing 
+the regression diagnostics as you go. 
+
+* Splitting datasets into numeric and non-numeric columns might help ggpairs() 
+run in manageable time, although you will need to add either a price or 
+resid column to the non-numeric dataframe in order to see its 
+correlations with the non-numeric predictors. 
+
+```{r}
+houses_numeric <- houses %>% 
+  select(price, bedrooms, bathrooms, sqft_living, sqft_lot, sqft_basement, 
+         floors, condition, grade, yr_built, lat, long, view) 
+
+ggpairs(houses_numeric) 
+```
+
+```{r}
+houses_nonnumeric <- houses_clean %>% 
+  select_if(function(x) !is.numeric(x)) 
+
+houses_nonnumeric 
+
+houses_nonnumeric$price <- houses_clean$price 
+
+ggpairs(houses_nonnumeric) 
+```
+
+Square foot of the living space - price increases by 280 for each increase in 
+square foot. It accounts for 49% of variance in price. 
+
+```{r}
+model_1 <- lm(price ~ sqft_living, data = houses) 
+
+summary(model_1) 
+
+par(mfrow = c(2, 2)) 
+
+plot(model_1) 
+```
+
+Searching for the predictors not yet in our model by adding the residuals. 
+
+```{r}
+remaining_residuals <- houses %>% 
+  add_residuals(model_1) %>% 
+  select(-c("price", "sqft_living")) 
+
+remaining_residuals %>% 
+  ggpairs() 
+```
+
+
+```{r}
+model_2 <- lm(price ~ sqft_living + yr_built, data = houses) 
+
+summary(model_2) 
+
+par(mfrow = c(2, 2)) 
+
+plot(model_2) 
+```
+
+There is a statistically significant difference if the model includes year built 
+so that can be kept in the model. 
+
+```{r}
+anova(model_1, model_2) 
+```
+
+```{r}
+remaining_residuals2 <- houses %>% 
+  add_residuals(model_2) %>% 
+  select(-c("price", "sqft_living", "yr_built")) 
+
+remaining_residuals2 %>% 
+  ggpairs()  
+```
+
+Visualising the interaction between view and waterfront. 
+
+```{r}
+coplot(price ~ view | waterfront, data = houses, columns=6) 
+```
+
+
+```{r}
+model_3 <- lm(price ~ sqft_living + yr_built + view:waterfront, data = houses) 
+
+summary(model_3) 
+
+par(mfrow = c(2, 2)) 
+
+plot(model_3) 
+```
+
+```{r}
+anova(model_2, model_3) 
+```
+
+```{r}
+library(relaimpo) 
+```
+
+```{r}
+calc.relimp(model_3, type = "lmg", rela = TRUE) 
+```       
+```{r}
+library(lm.beta) 
+
+model_3_betas <- lm.beta(model_3)  
+
+summary(model_3) 
+```
+
