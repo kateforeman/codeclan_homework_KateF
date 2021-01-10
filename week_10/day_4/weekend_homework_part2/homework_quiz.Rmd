@@ -1,0 +1,118 @@
+---
+title: "Homework Quiz"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../../styles.css
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. I want to predict how well 6 year-olds are going to do in their final school
+exams. Using the following variables am I likely under-fitting, fitting well
+or over-fitting? Postcode, gender, reading level, score in maths test, 
+date of birth, family income. 
+
+This may be verging on over fitting due to the introduction of date of birth. 
+Apart from that this model seems like a reasonable fit. 
+
+2. If I have two models, one with an AIC score of 34,902 and the other with
+an AIC score of 33,559 which model should I use? 
+
+The AIC with the score of 33,559. 
+
+3. I have two models, the first with: r-squared: 0.44, adjusted r-squared: 
+0.43. The second with: r-squared: 0.47, adjusted r-squared: 0.41. Which one 
+should I use? 
+
+The first model because the adjusted r-squared is higher. 
+
+4. I have a model with the following errors: RMSE error on test set: 10.3,
+RMSE error on training data: 10.4. Do you think this model is over-fitting? 
+
+This model does not seem to be overfitting. If it were to be overfitting 
+you would expect the train RMSE to be lower than the test error. 
+
+5. How does k-fold validation work? 
+
+The data is split up into a certain number of times (the k value). The model 
+is made 5 times and train the model on 4 folds of the data, leaving one 
+as a test. Once the process is complete, find the error of all the 
+test folds to measure model performance. 
+
+6. What is a validation set? When do you need one? 
+
+The validation set is data that is not used in training and testing. It 
+is useful when comparing models against each other, however it should only 
+be used once the model has been selected and should be kept apart 
+from the test set. 
+
+7. Describe how backwards selection works.              
+
+In this method you start with all of the predictors in your model and you 
+remove variables and stop when the r squared is decreased. 
+
+8. Describe how best subset selection works. 
+
+Best subset selection produces all the possible models and the best predictors 
+and it is the users decision what one to choose. 
+
+9. It is estimated on 5% of model projects end up being deployed. 
+What actions can you take to maximise the likelihood of your model 
+being deployed? 
+
+Be aware of overfitting as this is one of the most serious concerns with 
+model projects. There might be variables that are not allowed in the data. 
+The reasoning and validation of the model should be documented. 
+
+10. What metric could you use to confirm that the recent population 
+is similar to the development population? 
+
+You could choose to Look at the Population Stability Index (PSI) and
+Characteristic Stability Index (CSI). 
+
+11. How is the Population Stability Index defined? What does this mean in words? 
+
+The population stability index is the comparison of the distribution of a 
+scoring variable (predicted probability) of scoring data to training data 
+that was used to buid the model. How is the current scoring compared to 
+the predicted probability of the training data set. 
+
+12. Above what PSI value might we need to start to consider rebuilding or
+recalibrating the model 
+
+At or above 0.1 requires slight change. At or above 0.2 needs a significant 
+change or the model should not be implemented. 
+
+13. What are the common errors that can crop up when implementing a model? 
+
+Concept drift can occur. This is when the underlying population changes or the 
+variables underlying the model are no longer good predictors of the thing 
+that's being predicted. The data should be collected over a full year or over 
+multiple geographical locations to avoid issues with different weather 
+or locations making your model less accurate. 
+
+14. After performance monitoring, if we find that the discrimination is still
+satisfactory but the accuracy has deteriorated, what is the recommended action?  
+
+Check for a fundamental change in the population or a system implementation 
+issue. 
+
+15. Why is it important to have a unique model identifier for each model? 
+
+It allows each individual model to be uniquely identified. 
+
+16. Why is it important to document the modelling rationale and approach? 
+
+The model can have a detrimental impact on a business if it is not designed or 
+implemented properly. It is important to provide context as to why the 
+model technique was chosen in the given context and the limitations of the 
+model so other people can understand why your model was developed as it is and 
+how to use it effectively for their needs. 
+
