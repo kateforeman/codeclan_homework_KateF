@@ -10,5 +10,5 @@ Small Bags
 Large Bags
 XLarge Bags
 type: conventional or organic
-year: the year
-region: the city or region of the observation
+year: the year 
+region: the city or region of the observation 
