@@ -1,0 +1,133 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+* You have been provided some customer data from a shopping centre. Do some exploratory analysis on the data. Comment on findings. 
+
+* We are interested in creating a marketing campaign to target customers based on their spending score and annual income. Perform a k-means clustering to find if there are meaningful clusters in the data to target the customers. 
+
+* Perform k-means clustering and chose a value of k. 
+
+* Visualise the clustering for your chosen value of k. 
+
+* Do you think the clustering seems a good fit for this data? 
+
+* Comment on the attributes on one or two of the clusters (maybe even give them a label if you like - like in section 4.1 of the 'Segmentation & clustering intro' lesson). 
+
+```{r}
+library(tidyverse) 
+library(broom) 
+
+shopping <- read_csv("mall_customers.csv") %>% 
+  janitor::clean_names() %>% 
+  select(-customer_id) %>% 
+  mutate(gender = recode(gender, "Male" = 0, "Female" = 1)) 
+
+glimpse(shopping) 
+```
+
+# Exploring the data 
+
+It appears that those earning under 50k appear to fall in a wide range on the 
+spending score. Those earning around 45k to around 60k tend to fall around the 
+30 to 60 range. Those earning over about 70k appear to spend a varied amount 
+similar to those earning under 50k. Gender does not seem to be a big factor in 
+this dataset. 
+
+```{r}
+shopping %>% 
+  ggplot(aes(annual_income_k, spending_score_1_100, colour = gender)) + 
+  geom_point()  
+
+shopping %>% 
+  ggplot(aes(age, spending_score_1_100)) + 
+  geom_col()  
+
+shopping %>% 
+  group_by(gender) %>% 
+  summarise(mean_spending = mean(spending_score_1_100)) %>%
+  ggplot(aes(gender, mean_spending, fill = gender)) + 
+  geom_col() 
+```
+
+# Preparing data for clustering and dropping age and gender as these will not be beneficial to the aim of the K-means clustering. 
+
+Scaling the data - gender has been turned into a binary since the k means 
+clustering method will not produce good results with categoricals. 
+
+```{r}
+summary(shopping) 
+
+shopping_scaled <- shopping %>% 
+  select(-c(age, gender)) %>% 
+  mutate_all(scale) %>% 
+
+summary(shopping_scaled) 
+```
+
+# Performing K-means clustering on the data  
+
+```{r}
+shopping_clustered <- kmeans(shopping_scaled, centers = 5, nstart = 25)
+shopping_clustered 
+```
+
+```{r}
+tidy(shopping_clustered, 
+     col.names = colnames(shopping_scaled)) 
+
+glance(shopping_clustered) 
+
+augment(shopping_clustered, shopping) 
+```
+
+# Determining the K value 
+
+The K value will be 5. 
+
+```{r}
+library(factoextra) 
+
+#Unsure what the augment argument is meant to be, it is not accepting a variable name. 
+
+k_clusters <- tibble(k = 1:5) %>%
+  mutate(
+    kclust = map(k, ~ kmeans(shopping_scaled, .x, nstart = 25)), 
+    tidied = map(kclust, tidy),
+    glanced = map(kclust, glance),
+    augmented = map(kclust, augment, shopping_scaled)
+  ) 
+
+clusterings <- k_clusters %>%
+  unnest(glanced)
+
+clusterings 
+
+#Silhouette method 
+
+ silhoutte <- fviz_nbclust(shopping_scaled, kmeans, method = "silhouette", nstart = 25) 
+
+#Elbow Method 
+
+fviz_nbclust(shopping_scaled, kmeans, method = "wss", nstart = 25) 
+```
+
+# Visualising clustering 
+
+```{r}
+clusterings %>% 
+  unnest(cols = c(augmented)) %>% 
+  filter(k <= 5) %>% 
+ ggplot(aes(x = annual_income_k, y = spending_score_1_100)) + 
+  geom_point(aes(color = .cluster)) + 
+  facet_wrap(~ k) 
+
+clusterings %>% 
+  unnest(augmented) %>% 
+  filter(k <= 5) %>% 
+  group_by(.cluster) %>% 
+  summarise(mean(spending_score_1_100), mean(annual_income_k))   
+```
+
+The clustering has given a clear distinction between low earners who have a low spending score, low earners with a high income score, those who are in the middle region of income and sit around 50 on the spending score, high earners with a low spending score and high earnings who are spending a lot. I would say this is a pretty accurate way to depict this data given the conclusions drawn earlier are pretty similar to the clustering findings. 
