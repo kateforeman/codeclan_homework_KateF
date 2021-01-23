@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse) 
+library(modelr) 
+library(stringr) 
+library(GGally) 
+
+cars <- read_csv("car_dekho_details.csv") %>% 
+  mutate(year = as.factor(year)) %>% 
+  select(-name) 
+
+cars 
+```
+
+```{r}
+glimpse(cars)  
+```
+
+```{r}
+model <- lm(selling_price ~ ., data = cars) 
+
+summary(model) 
+```
+
